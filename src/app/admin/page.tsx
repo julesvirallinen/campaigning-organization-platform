@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface TimeSlot {
   id: string;
@@ -12,6 +13,7 @@ interface TimeSlot {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
   const [timeslots, setTimeslots] = useState<TimeSlot[]>([]);
   const [newSlot, setNewSlot] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -61,9 +63,22 @@ export default function AdminPage() {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("myName");
+    router.push("/");
+  };
+
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Admin - Manage Time Slots</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold">Admin - Manage Time Slots</h1>
+        <button
+          onClick={handleLogout}
+          className="bg-gray-500 text-white px-3 py-1 rounded hover:bg-gray-600"
+        >
+          Logout
+        </button>
+      </div>
 
       <form onSubmit={handleSubmit} className="mb-8 space-y-4">
         <div>

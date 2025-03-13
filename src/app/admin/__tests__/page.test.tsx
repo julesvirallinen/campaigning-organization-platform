@@ -1,8 +1,17 @@
 import { render, screen, act, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AdminPage from "../page";
+import { useRouter } from "next/navigation";
+
+jest.mock("next/navigation", () => ({
+  useRouter: jest.fn(),
+}));
 
 describe("AdminPage", () => {
+  const mockRouter = {
+    push: jest.fn(),
+  };
+
   beforeEach(() => {
     // Mock fetch to return empty array initially
     global.fetch = jest.fn(() =>
@@ -10,6 +19,8 @@ describe("AdminPage", () => {
         json: () => Promise.resolve([]),
       })
     ) as jest.Mock;
+
+    (useRouter as jest.Mock).mockReturnValue(mockRouter);
   });
 
   it("adds a new timeslot and refreshes the list", async () => {
@@ -62,11 +73,22 @@ describe("AdminPage", () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date: today,
-          startTime: "10:00",
-          endTime: "12:00",
+          startTime: `${today}T10:00`,
+          endTime: `${today}T12:00`,
           location: "Test Location",
         }),
       });
     });
+  });
+
+  it("logs out and redirects to home page", async () => {
+    const user = userEvent.setup();
+    render(<AdminPage />);
+
+    const logoutButton = screen.getByRole("button", { name: /logout/i });
+    await user.click(logoutButton);
+
+    expect(localStorage.getItem("myName")).toBeNull();
+    expect(mockRouter.push).toHaveBeenCalledWith("/");
   });
 });
