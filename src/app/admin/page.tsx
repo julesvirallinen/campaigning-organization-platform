@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { fi } from "date-fns/locale";
 import { Slider, Box } from "@mui/material";
+import Title from "@/components/Title";
+import { useRouter } from "next/navigation";
 
 interface TimeSlot {
   id: string;
@@ -16,14 +18,17 @@ interface TimeSlot {
 }
 
 export default function AdminPage() {
+  const router = useRouter();
   const [timeslots, setTimeslots] = useState<TimeSlot[]>([]);
   const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null);
   const [formData, setFormData] = useState({
     date: "",
-    startTime: "09:00",
-    endTime: "10:00",
+    startTime: "",
+    endTime: "",
     location: "",
     description: "",
+    creatorName: "",
+    creatorNote: "",
   });
 
   useEffect(() => {
@@ -33,6 +38,11 @@ export default function AdminPage() {
     const dateParam = params.get("date");
     if (dateParam) {
       setFormData((prev) => ({ ...prev, date: dateParam }));
+    }
+    // Get name from localStorage
+    const storedName = localStorage.getItem("myName");
+    if (storedName) {
+      setFormData((prev) => ({ ...prev, creatorName: storedName }));
     }
   }, []);
 
@@ -69,12 +79,15 @@ export default function AdminPage() {
       fetchTimeslots();
       setFormData({
         date: "",
-        startTime: "09:00",
-        endTime: "10:00",
+        startTime: "",
+        endTime: "",
         location: "",
         description: "",
+        creatorName: "",
+        creatorNote: "",
       });
       setEditingSlot(null);
+      router.push("/");
     } catch (error) {
       console.error("Error submitting timeslot:", error);
     }
@@ -94,12 +107,22 @@ export default function AdminPage() {
 
   const handleEdit = (slot: TimeSlot) => {
     setEditingSlot(slot);
+    const startTime = slot.startTime.includes("T")
+      ? format(parseISO(slot.startTime), "HH:mm")
+      : slot.startTime;
+    const endTime = slot.endTime.includes("T")
+      ? format(parseISO(slot.endTime), "HH:mm")
+      : slot.endTime;
+    const date = format(parseISO(slot.date), "yyyy-MM-dd");
+
     setFormData({
-      date: slot.date,
-      startTime: slot.startTime.split("T")[1].slice(0, 5),
-      endTime: slot.endTime.split("T")[1].slice(0, 5),
+      date,
+      startTime,
+      endTime,
       location: slot.location,
       description: slot.description,
+      creatorName: slot.signups[0]?.name || "",
+      creatorNote: slot.signups[0]?.note || "",
     });
   };
 
@@ -107,19 +130,18 @@ export default function AdminPage() {
     setEditingSlot(null);
     setFormData({
       date: "",
-      startTime: "09:00",
-      endTime: "10:00",
+      startTime: "",
+      endTime: "",
       location: "",
       description: "",
+      creatorName: "",
+      creatorNote: "",
     });
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">
-        Admin Panel
-      </h1>
-
+      <Title />
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
         <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
           {editingSlot ? "Edit Timeslot" : "Add New Timeslot"}
@@ -139,8 +161,9 @@ export default function AdminPage() {
               onChange={(e) =>
                 setFormData({ ...formData, date: e.target.value })
               }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
               required
+              min={new Date().toISOString().split("T")[0]}
             />
           </div>
 
@@ -257,8 +280,37 @@ export default function AdminPage() {
               }
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               rows={3}
-              required
             />
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Your Name
+              </label>
+              <input
+                type="text"
+                value={formData.creatorName}
+                onChange={(e) =>
+                  setFormData({ ...formData, creatorName: e.target.value })
+                }
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Your Note (Optional)
+              </label>
+              <textarea
+                value={formData.creatorNote}
+                onChange={(e) =>
+                  setFormData({ ...formData, creatorNote: e.target.value })
+                }
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                rows={2}
+              />
+            </div>
           </div>
 
           <div className="flex gap-4">
