@@ -1,4 +1,10 @@
-import { render, screen, act, waitFor } from "@testing-library/react";
+import {
+  render,
+  screen,
+  act,
+  waitFor,
+  fireEvent,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import AdminPage from "../page";
 import { useRouter } from "next/navigation";
@@ -51,14 +57,13 @@ describe("AdminPage", () => {
 
     // Fill out the form
     const locationInput = screen.getByLabelText("Location");
-    const startTimeInput = screen.getByLabelText("Start Time");
-    const endTimeInput = screen.getByLabelText("End Time");
+    const timeSlider = screen.getByRole("slider");
     const submitButton = screen.getByRole("button", { name: /add time slot/i });
 
     await act(async () => {
       await user.type(locationInput, "Test Location");
-      await user.type(startTimeInput, "10:00");
-      await user.type(endTimeInput, "12:00");
+      // Set slider to 10 AM - 12 PM
+      fireEvent.change(timeSlider, { target: { value: [10, 12] } });
       await user.click(submitButton);
     });
 

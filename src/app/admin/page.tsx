@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Slider } from "@mui/material";
 
 interface TimeSlot {
   id: string;
@@ -12,13 +13,24 @@ interface TimeSlot {
   signups: Array<{ id: string; name: string; note?: string }>;
 }
 
+const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8 AM to 8 PM
+
+const formatHourLabel = (hour: number) => {
+  return `${hour % 12 || 12}${hour < 12 ? "AM" : "PM"}`;
+};
+
+const hourToTimeString = (hour: number) => {
+  return `${hour.toString().padStart(2, "0")}:00`;
+};
+
 export default function AdminPage() {
   const router = useRouter();
   const [timeslots, setTimeslots] = useState<TimeSlot[]>([]);
+  const [timeRange, setTimeRange] = useState<number[]>([9, 17]); // Default 9 AM to 5 PM
   const [newSlot, setNewSlot] = useState({
     date: new Date().toISOString().split("T")[0],
-    startTime: "",
-    endTime: "",
+    startTime: hourToTimeString(9),
+    endTime: hourToTimeString(17),
     location: "",
   });
 
@@ -46,8 +58,8 @@ export default function AdminPage() {
     });
     setNewSlot({
       date: new Date().toISOString().split("T")[0],
-      startTime: "",
-      endTime: "",
+      startTime: hourToTimeString(9),
+      endTime: hourToTimeString(17),
       location: "",
     });
     fetchTimeslots();
@@ -66,6 +78,16 @@ export default function AdminPage() {
   const handleLogout = () => {
     localStorage.removeItem("myName");
     router.push("/");
+  };
+
+  const handleTimeRangeChange = (event: Event, newValue: number | number[]) => {
+    const [start, end] = newValue as number[];
+    setTimeRange([start, end]);
+    setNewSlot({
+      ...newSlot,
+      startTime: hourToTimeString(start),
+      endTime: hourToTimeString(end),
+    });
   };
 
   return (
@@ -94,35 +116,29 @@ export default function AdminPage() {
             required
           />
         </div>
-        <div>
-          <label htmlFor="startTime" className="block mb-1">
-            Start Time
-          </label>
-          <input
-            id="startTime"
-            type="time"
-            value={newSlot.startTime}
-            onChange={(e) =>
-              setNewSlot({ ...newSlot, startTime: e.target.value })
-            }
-            className="border p-2 rounded"
-            required
-          />
-        </div>
-        <div>
-          <label htmlFor="endTime" className="block mb-1">
-            End Time
-          </label>
-          <input
-            id="endTime"
-            type="time"
-            value={newSlot.endTime}
-            onChange={(e) =>
-              setNewSlot({ ...newSlot, endTime: e.target.value })
-            }
-            className="border p-2 rounded"
-            required
-          />
+        <div className="py-4">
+          <label className="block mb-1">Time Range</label>
+          <div className="px-4">
+            <Slider
+              value={timeRange}
+              onChange={handleTimeRangeChange}
+              min={8}
+              max={20}
+              step={1}
+              marks={HOURS.map((hour) => ({
+                value: hour,
+                label: formatHourLabel(hour),
+              }))}
+              valueLabelFormat={formatHourLabel}
+              valueLabelDisplay="auto"
+            />
+          </div>
+          <div className="flex justify-between text-sm text-gray-600 mt-1">
+            <span>
+              Selected: {formatHourLabel(timeRange[0])} -{" "}
+              {formatHourLabel(timeRange[1])}
+            </span>
+          </div>
         </div>
         <div>
           <label htmlFor="location" className="block mb-1">
