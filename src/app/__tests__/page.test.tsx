@@ -1,150 +1,236 @@
-import { render, screen, waitFor, act } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
 import HomePage from "../page";
 
 // Mock fetch
-global.fetch = jest.fn(() =>
-  Promise.resolve({
-    json: () => Promise.resolve([]),
-  })
-) as jest.Mock;
+global.fetch = jest.fn();
+
+// Helper to create ISO date string for a specific date
+const getISODate = (daysFromNow = 0) => {
+  const date = new Date();
+  date.setDate(date.getDate() + daysFromNow);
+  return date.toISOString().split("T")[0];
+};
+
+// Helper to create ISO datetime string
+const getISODateTime = (date: string, hours: number, minutes = 0) => {
+  return `${date}T${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}:00`;
+};
+
+// Types for API responses
+interface TimeSlot {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  location: string;
+  signups: Array<{ id: string; name: string }>;
+}
 
 describe("HomePage", () => {
   beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks();
     localStorage.clear();
+    (global.fetch as jest.Mock).mockReset();
+  });
+
+  it("shows welcome form when no name is stored", () => {
+    render(<HomePage />);
+    expect(screen.getByText("Welcome!")).toBeInTheDocument();
+    expect(screen.getByLabelText("Your Name")).toBeInTheDocument();
+  });
+
+  it("stores name in localStorage and shows timeslots after submission", async () => {
+    const date = getISODate();
+    const mockTimeslots: TimeSlot[] = [
+      {
+        id: "1",
+        date,
+        startTime: getISODateTime(date, 9),
+        endTime: getISODateTime(date, 10),
+        location: "Test Location",
+        signups: [],
+      },
+    ];
+
     (global.fetch as jest.Mock).mockImplementation(() =>
-      Promise.resolve({
-        json: () => Promise.resolve([]),
-      })
-    );
-  });
-
-  it("shows name input form when no name is stored", () => {
-    render(<HomePage />);
-    expect(screen.getByLabelText(/your name/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /continue/i })
-    ).toBeInTheDocument();
-  });
-
-  it("saves name to localStorage when form is submitted", async () => {
-    const user = userEvent.setup();
-    render(<HomePage />);
-    const nameInput = screen.getByLabelText(/your name/i);
-    const submitButton = screen.getByRole("button", { name: /continue/i });
-
-    await act(async () => {
-      await user.type(nameInput, "John Doe");
-    });
-
-    await act(async () => {
-      await user.click(submitButton);
-    });
-
-    expect(localStorage.getItem("myName")).toBe("John Doe");
-  });
-
-  it("does not save empty name to localStorage", async () => {
-    const user = userEvent.setup();
-    render(<HomePage />);
-    const submitButton = screen.getByRole("button", { name: /continue/i });
-    await act(async () => {
-      await user.click(submitButton);
-    });
-
-    expect(localStorage.getItem("myName")).toBeNull();
-  });
-
-  it("shows timeslots when name is stored", async () => {
-    localStorage.setItem("myName", "John Doe");
-    (global.fetch as jest.Mock).mockImplementationOnce(() =>
-      Promise.resolve({
-        json: () =>
-          Promise.resolve([
-            {
-              id: "1",
-              date: "2024-03-20",
-              startTime: "2024-03-20T10:00:00",
-              endTime: "2024-03-20T12:00:00",
-              location: "Test Location",
-              signups: [],
-            },
-          ]),
-      })
+      Promise.resolve({ json: () => Promise.resolve(mockTimeslots) })
     );
 
+    render(<HomePage />);
+
+    const nameInput = screen.getByLabelText("Your Name") as HTMLInputElement;
+    const submitButton = screen.getByText("Continue");
+
+    await act(async () => {
+      fireEvent.change(nameInput, { target: { value: "Test User" } });
+      fireEvent.submit(submitButton.closest("form")!);
+    });
+
+    expect(localStorage.getItem("myName")).toBe("Test User");
+
+    await waitFor(() => {
+      expect(screen.getByText("Available Time Slots")).toBeInTheDocument();
+      expect(screen.getByText("Test Location")).toBeInTheDocument();
+      expect(screen.getByText(/9:00 AM/)).toBeInTheDocument();
+    });
+  });
+
+  it("shows next 14 days of dates", async () => {
+    const date = getISODate();
+    const mockTimeslots: TimeSlot[] = [
+      {
+        id: "1",
+        date,
+        startTime: getISODateTime(date, 9),
+        endTime: getISODateTime(date, 10),
+        location: "Test Location",
+        signups: [],
+      },
+    ];
+
+    (global.fetch as jest.Mock).mockImplementation(() =>
+      Promise.resolve({ json: () => Promise.resolve(mockTimeslots) })
+    );
+
+    localStorage.setItem("myName", "Test User");
     render(<HomePage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/available time slots/i)).toBeInTheDocument();
-      expect(screen.getByText(/signed in as: john doe/i)).toBeInTheDocument();
+      const dayHeaders = screen.getAllByRole("heading", { level: 2 });
+      expect(dayHeaders).toHaveLength(14);
     });
   });
 
-  it("allows signing up for a timeslot", async () => {
-    const user = userEvent.setup();
-    localStorage.setItem("myName", "John Doe");
-    (global.fetch as jest.Mock)
-      .mockImplementationOnce(() =>
-        Promise.resolve({
-          json: () =>
-            Promise.resolve([
-              {
-                id: "1",
-                date: "2024-03-20",
-                startTime: "2024-03-20T10:00:00",
-                endTime: "2024-03-20T12:00:00",
-                location: "Test Location",
-                signups: [],
-              },
-            ]),
-        })
-      )
-      .mockImplementationOnce(() =>
-        Promise.resolve({
-          json: () => Promise.resolve({ success: true }),
-        })
-      )
-      .mockImplementationOnce(() =>
-        Promise.resolve({
-          json: () =>
-            Promise.resolve([
-              {
-                id: "1",
-                date: "2024-03-20",
-                startTime: "2024-03-20T10:00:00",
-                endTime: "2024-03-20T12:00:00",
-                location: "Test Location",
-                signups: [{ id: "1", name: "John Doe", note: "Test note" }],
-              },
-            ]),
-        })
+  it("shows empty state message for days without timeslots", async () => {
+    const date = getISODate(1);
+    const mockTimeslots: TimeSlot[] = [
+      {
+        id: "1",
+        date,
+        startTime: getISODateTime(date, 9),
+        endTime: getISODateTime(date, 10),
+        location: "Test Location",
+        signups: [],
+      },
+    ];
+
+    (global.fetch as jest.Mock).mockImplementation(() =>
+      Promise.resolve({ json: () => Promise.resolve(mockTimeslots) })
+    );
+
+    localStorage.setItem("myName", "Test User");
+    render(<HomePage />);
+
+    await waitFor(() => {
+      const emptyMessages = screen.getAllByText(
+        "No time slots available for this day"
       );
+      expect(emptyMessages).toHaveLength(13);
+    });
+  });
 
+  it("shows HELP NEEDED chip for slots without signups", async () => {
+    const date = getISODate();
+    const mockTimeslots: TimeSlot[] = [
+      {
+        id: "1",
+        date,
+        startTime: getISODateTime(date, 9),
+        endTime: getISODateTime(date, 10),
+        location: "Test Location",
+        signups: [],
+      },
+    ];
+
+    (global.fetch as jest.Mock).mockImplementation(() =>
+      Promise.resolve({ json: () => Promise.resolve(mockTimeslots) })
+    );
+
+    localStorage.setItem("myName", "Test User");
     render(<HomePage />);
 
     await waitFor(() => {
-      expect(screen.getByText(/available time slots/i)).toBeInTheDocument();
+      expect(screen.getByText("HELP NEEDED")).toBeInTheDocument();
+    });
+  });
+
+  it("allows signing up and removing signup", async () => {
+    const date = getISODate();
+    const mockTimeslots: TimeSlot[] = [
+      {
+        id: "1",
+        date,
+        startTime: getISODateTime(date, 9),
+        endTime: getISODateTime(date, 10),
+        location: "Test Location",
+        signups: [],
+      },
+    ];
+
+    const mockTimeslotsWithSignup: TimeSlot[] = [
+      {
+        ...mockTimeslots[0],
+        signups: [{ id: "1", name: "Test User" }],
+      },
+    ];
+
+    let currentTimeslots = mockTimeslots;
+
+    (global.fetch as jest.Mock).mockImplementation((url) => {
+      if (url === "/api/timeslots") {
+        return Promise.resolve({
+          json: () => Promise.resolve(currentTimeslots),
+        });
+      }
+      if (url === "/api/signups") {
+        currentTimeslots = mockTimeslotsWithSignup;
+        return Promise.resolve({
+          json: () => Promise.resolve({ success: true }),
+        });
+      }
+      if (url.includes("/api/signups/")) {
+        currentTimeslots = mockTimeslots;
+        return Promise.resolve({
+          json: () => Promise.resolve({ success: true }),
+        });
+      }
+      return Promise.reject(new Error("Not found"));
     });
 
-    const noteInput = screen.getByPlaceholderText(/optional note/i);
-    const signUpButton = screen.getByRole("button", { name: /sign up/i });
+    localStorage.setItem("myName", "Test User");
+    render(<HomePage />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/9:00 AM/)).toBeInTheDocument();
+    });
 
     await act(async () => {
-      await user.type(noteInput, "Test note");
-      await user.click(signUpButton);
+      fireEvent.click(screen.getByText("Test Location").closest("div")!);
     });
 
-    expect(global.fetch).toHaveBeenCalledWith("/api/signups", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: "John Doe",
-        note: "Test note",
-        timeSlotId: "1",
-      }),
+    await act(async () => {
+      fireEvent.click(screen.getByText("Sign Up"));
+    });
+
+    await waitFor(() => {
+      expect(
+        screen.getByText("Test User", { selector: ".bg-blue-100" })
+      ).toBeInTheDocument();
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByText("Remove Sign Up"));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText("HELP NEEDED")).toBeInTheDocument();
     });
   });
 });
