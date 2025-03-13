@@ -10,6 +10,7 @@ import {
   formatISO,
   isSameDay,
 } from "date-fns";
+import { useRouter } from "next/navigation";
 
 interface TimeSlot {
   id: string;
@@ -21,6 +22,7 @@ interface TimeSlot {
 }
 
 export default function HomePage() {
+  const router = useRouter();
   const [timeslots, setTimeslots] = useState<TimeSlot[]>([]);
   const [name, setName] = useState("");
   const [inputName, setInputName] = useState("");
@@ -36,7 +38,6 @@ export default function HomePage() {
   const fetchTimeslots = async () => {
     const res = await fetch("/api/timeslots");
     const data = await res.json();
-    console.log("Fetched timeslots:", data);
     setTimeslots(data);
   };
 
@@ -79,10 +80,7 @@ export default function HomePage() {
 
   const getNextTwoWeeks = () => {
     const dates: string[] = [];
-    const today =
-      timeslots.length > 0
-        ? startOfDay(parseISO(timeslots[0].date))
-        : startOfDay(new Date());
+    const today = startOfDay(new Date());
 
     for (let i = 0; i < 14; i++) {
       const date = addDays(today, i);
@@ -96,19 +94,9 @@ export default function HomePage() {
 
   const groupedTimeslots = timeslots.reduce((acc, slot) => {
     const slotDate = parseISO(slot.date);
-    console.log("Processing slot date:", format(slotDate, "yyyy-MM-dd"));
-
-    const matchingDate = allDates.find((date) => {
-      const parsedDate = parseISO(date);
-      const matches = isSameDay(parsedDate, slotDate);
-      console.log(
-        "Comparing with:",
-        format(parsedDate, "yyyy-MM-dd"),
-        "matches:",
-        matches
-      );
-      return matches;
-    });
+    const matchingDate = allDates.find((date) =>
+      isSameDay(parseISO(date), slotDate)
+    );
 
     if (matchingDate) {
       if (!acc[matchingDate]) {
@@ -118,10 +106,6 @@ export default function HomePage() {
     }
     return acc;
   }, {} as Record<string, TimeSlot[]>);
-
-  console.log("All dates:", allDates);
-  console.log("Timeslots:", timeslots);
-  console.log("Final grouped timeslots:", groupedTimeslots);
 
   if (!name) {
     return (
@@ -164,17 +148,50 @@ export default function HomePage() {
     <div className="container mx-auto p-4 max-w-4xl">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Available Time Slots</h1>
-        <div className="text-sm text-gray-600">
-          Signed in as: <span className="font-medium">{name}</span>
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-600">
+            Signed in as: <span className="font-medium">{name}</span>
+          </div>
+          <button
+            onClick={() => {
+              localStorage.removeItem("myName");
+              setName("");
+            }}
+            className="text-sm text-red-600 hover:text-red-700"
+          >
+            Logout
+          </button>
         </div>
       </div>
 
       <div className="space-y-6">
         {allDates.map((date) => (
           <div key={date}>
-            <h2 className="text-lg font-semibold text-gray-700 mb-3">
-              {formatDayHeader(date)}
-            </h2>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold text-gray-700">
+                {formatDayHeader(date)}
+              </h2>
+              <button
+                onClick={() => {
+                  router.push(`/admin?date=${date}`);
+                }}
+                className="text-gray-500 hover:text-gray-700"
+                title="Add timeslot for this date"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
             <div className="space-y-2">
               {groupedTimeslots[date]?.map((slot) => {
                 const isSignedUp = slot.signups.some((s) => s.name === name);
@@ -264,14 +281,19 @@ export default function HomePage() {
                     )}
                   </div>
                 );
-              }) || (
-                <div className="text-gray-500 text-sm italic">
-                  No time slots available for this day
-                </div>
-              )}
+              })}
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="mt-8 text-center">
+        <a
+          href="/past-timeslots"
+          className="inline-block bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-medium"
+        >
+          View Past Time Slots
+        </a>
       </div>
     </div>
   );

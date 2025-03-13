@@ -157,4 +157,14 @@ describe("AdminPage", () => {
     expect(localStorage.getItem("myName")).toBeNull();
     expect(mockRouter.push).toHaveBeenCalledWith("/");
   });
+
+  it("pre-fills date from URL parameter", async () => {
+    const today = new Date().toISOString().split("T")[0];
+    window.history.pushState({}, "", `/admin?date=${today}`);
+
+    render(<AdminPage />);
+
+    const dateInput = screen.getByLabelText("Date");
+    expect(dateInput).toHaveValue(today);
+  });
 });

@@ -6,6 +6,7 @@ import {
   act,
 } from "@testing-library/react";
 import HomePage from "../page";
+import userEvent from "@testing-library/user-event";
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -232,5 +233,28 @@ describe("HomePage", () => {
     await waitFor(() => {
       expect(screen.getByText("HELP NEEDED")).toBeInTheDocument();
     });
+  });
+
+  it("allows logging out", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("myName", "Test User");
+    render(<HomePage />);
+
+    const logoutButton = screen.getByText("Logout");
+    await user.click(logoutButton);
+
+    expect(localStorage.getItem("myName")).toBeNull();
+    expect(screen.getByText("Your Name")).toBeInTheDocument();
+  });
+
+  it("adds timeslot button redirects to admin with date", async () => {
+    const user = userEvent.setup();
+    localStorage.setItem("myName", "Test User");
+    render(<HomePage />);
+
+    const addButton = screen.getAllByTitle("Add timeslot for this date")[0];
+    await user.click(addButton);
+
+    expect(window.location.href).toContain("/admin?date=");
   });
 });
