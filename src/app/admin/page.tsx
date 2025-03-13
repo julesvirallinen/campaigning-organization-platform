@@ -14,7 +14,7 @@ interface TimeSlot {
 export default function AdminPage() {
   const [timeslots, setTimeslots] = useState<TimeSlot[]>([]);
   const [newSlot, setNewSlot] = useState({
-    date: "",
+    date: new Date().toISOString().split("T")[0],
     startTime: "",
     endTime: "",
     location: "",
@@ -35,9 +35,19 @@ export default function AdminPage() {
     await fetch("/api/timeslots", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(newSlot),
+      body: JSON.stringify({
+        date: newSlot.date,
+        startTime: `${newSlot.date}T${newSlot.startTime}`,
+        endTime: `${newSlot.date}T${newSlot.endTime}`,
+        location: newSlot.location,
+      }),
     });
-    setNewSlot({ date: "", startTime: "", endTime: "", location: "" });
+    setNewSlot({
+      date: new Date().toISOString().split("T")[0],
+      startTime: "",
+      endTime: "",
+      location: "",
+    });
     fetchTimeslots();
   };
 
@@ -46,14 +56,22 @@ export default function AdminPage() {
     fetchTimeslots();
   };
 
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Admin - Manage Time Slots</h1>
 
       <form onSubmit={handleSubmit} className="mb-8 space-y-4">
         <div>
-          <label className="block mb-1">Date</label>
+          <label htmlFor="date" className="block mb-1">
+            Date
+          </label>
           <input
+            id="date"
             type="date"
             value={newSlot.date}
             onChange={(e) => setNewSlot({ ...newSlot, date: e.target.value })}
@@ -62,8 +80,11 @@ export default function AdminPage() {
           />
         </div>
         <div>
-          <label className="block mb-1">Start Time</label>
+          <label htmlFor="startTime" className="block mb-1">
+            Start Time
+          </label>
           <input
+            id="startTime"
             type="time"
             value={newSlot.startTime}
             onChange={(e) =>
@@ -74,8 +95,11 @@ export default function AdminPage() {
           />
         </div>
         <div>
-          <label className="block mb-1">End Time</label>
+          <label htmlFor="endTime" className="block mb-1">
+            End Time
+          </label>
           <input
+            id="endTime"
             type="time"
             value={newSlot.endTime}
             onChange={(e) =>
@@ -86,8 +110,11 @@ export default function AdminPage() {
           />
         </div>
         <div>
-          <label className="block mb-1">Location</label>
+          <label htmlFor="location" className="block mb-1">
+            Location
+          </label>
           <input
+            id="location"
             type="text"
             value={newSlot.location}
             onChange={(e) =>
@@ -114,8 +141,7 @@ export default function AdminPage() {
                   {new Date(slot.date).toLocaleDateString()}
                 </p>
                 <p>
-                  {new Date(slot.startTime).toLocaleTimeString()} -{" "}
-                  {new Date(slot.endTime).toLocaleTimeString()}
+                  {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
                 </p>
                 <p>{slot.location}</p>
               </div>
