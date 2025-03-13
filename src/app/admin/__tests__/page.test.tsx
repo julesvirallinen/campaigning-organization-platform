@@ -38,6 +38,7 @@ describe("AdminPage", () => {
       startTime: `${today}T10:00:00`,
       endTime: `${today}T12:00:00`,
       location: "Test Location",
+      note: "Test Note",
       signups: [],
     };
 
@@ -57,13 +58,17 @@ describe("AdminPage", () => {
 
     // Fill out the form
     const locationInput = screen.getByLabelText("Location");
-    const timeSlider = screen.getByRole("slider");
+    const noteInput = screen.getByLabelText(/note/i);
+    const timeSliders = screen.getAllByRole("slider");
     const submitButton = screen.getByRole("button", { name: /add time slot/i });
 
     await act(async () => {
       await user.type(locationInput, "Test Location");
-      // Set slider to 10 AM - 12 PM
-      fireEvent.change(timeSlider, { target: { value: [10, 12] } });
+      await user.type(noteInput, "Test Note");
+      // Set start time to 10 AM
+      fireEvent.change(timeSliders[0], { target: { value: "10" } });
+      // Set end time to 12 PM
+      fireEvent.change(timeSliders[1], { target: { value: "12" } });
       await user.click(submitButton);
     });
 
@@ -71,6 +76,10 @@ describe("AdminPage", () => {
     await waitFor(async () => {
       expect(screen.getByText("Test Location")).toBeInTheDocument();
       expect(screen.getByText(/10:00.*12:00/)).toBeInTheDocument();
+      expect(
+        screen.getByText("Description:", { exact: false })
+      ).toBeInTheDocument();
+      expect(screen.getByText("Test Note")).toBeInTheDocument();
 
       // Verify the API was called correctly
       expect(global.fetch).toHaveBeenCalledWith("/api/timeslots", {
@@ -81,6 +90,58 @@ describe("AdminPage", () => {
           startTime: `${today}T10:00`,
           endTime: `${today}T12:00`,
           location: "Test Location",
+          note: "Test Note",
+        }),
+      });
+    });
+  });
+
+  it("creates timeslot with default time range", async () => {
+    const user = userEvent.setup();
+    const today = new Date().toISOString().split("T")[0];
+    const mockTimeslot = {
+      id: "1",
+      date: today,
+      startTime: `${today}T09:00:00`,
+      endTime: `${today}T17:00:00`,
+      location: "Default Time Location",
+      signups: [],
+    };
+
+    (global.fetch as jest.Mock)
+      .mockImplementationOnce(() =>
+        Promise.resolve({ json: () => Promise.resolve([]) })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({ json: () => Promise.resolve(mockTimeslot) })
+      )
+      .mockImplementationOnce(() =>
+        Promise.resolve({ json: () => Promise.resolve([mockTimeslot]) })
+      );
+
+    render(<AdminPage />);
+
+    const locationInput = screen.getByLabelText("Location");
+    const submitButton = screen.getByRole("button", { name: /add time slot/i });
+
+    await act(async () => {
+      await user.type(locationInput, "Default Time Location");
+      await user.click(submitButton);
+    });
+
+    await waitFor(async () => {
+      expect(screen.getByText("Default Time Location")).toBeInTheDocument();
+      expect(screen.getByText(/9:00.*5:00/)).toBeInTheDocument();
+
+      expect(global.fetch).toHaveBeenCalledWith("/api/timeslots", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date: today,
+          startTime: `${today}T09:00`,
+          endTime: `${today}T17:00`,
+          location: "Default Time Location",
+          note: "",
         }),
       });
     });

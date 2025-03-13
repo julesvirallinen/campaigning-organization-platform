@@ -17,6 +17,7 @@ export async function POST(request: Request) {
       startTime: new Date(data.startTime),
       endTime: new Date(data.endTime),
       location: data.location,
+      description: data.note,
     },
   });
   return NextResponse.json(timeslot);

@@ -11,6 +11,7 @@ interface TimeSlot {
   endTime: string;
   location: string;
   signups: Array<{ id: string; name: string; note?: string }>;
+  note?: string;
 }
 
 const HOURS = Array.from({ length: 13 }, (_, i) => i + 8); // 8 AM to 8 PM
@@ -32,6 +33,7 @@ export default function AdminPage() {
     startTime: hourToTimeString(9),
     endTime: hourToTimeString(17),
     location: "",
+    note: "",
   });
 
   useEffect(() => {
@@ -54,6 +56,7 @@ export default function AdminPage() {
         startTime: `${newSlot.date}T${newSlot.startTime}`,
         endTime: `${newSlot.date}T${newSlot.endTime}`,
         location: newSlot.location,
+        note: newSlot.note,
       }),
     });
     setNewSlot({
@@ -61,6 +64,7 @@ export default function AdminPage() {
       startTime: hourToTimeString(9),
       endTime: hourToTimeString(17),
       location: "",
+      note: "",
     });
     fetchTimeslots();
   };
@@ -155,6 +159,19 @@ export default function AdminPage() {
             required
           />
         </div>
+        <div>
+          <label htmlFor="note" className="block mb-1">
+            Note (optional)
+          </label>
+          <textarea
+            id="note"
+            value={newSlot.note}
+            onChange={(e) => setNewSlot({ ...newSlot, note: e.target.value })}
+            className="border p-2 rounded w-full"
+            rows={3}
+            placeholder="Add any additional information about this timeslot..."
+          />
+        </div>
         <button
           type="submit"
           className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
@@ -175,6 +192,14 @@ export default function AdminPage() {
                   {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
                 </p>
                 <p>{slot.location}</p>
+                {slot.note && (
+                  <div className="mt-2">
+                    <p className="font-medium text-gray-700">Description:</p>
+                    <p className="text-gray-600 whitespace-pre-wrap">
+                      {slot.note}
+                    </p>
+                  </div>
+                )}
               </div>
               <button
                 onClick={() => handleDelete(slot.id)}
