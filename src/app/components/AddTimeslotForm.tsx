@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Slider, Box } from "@mui/material";
 
 interface AddTimeslotFormData {
@@ -22,15 +22,19 @@ export default function AddTimeslotForm({
   initialData,
   submitLabel = "Add Timeslot",
 }: AddTimeslotFormProps) {
-  const [formData, setFormData] = useState<AddTimeslotFormData>(
-    initialData || {
-      date: "",
-      startTime: "09:00",
-      endTime: "10:00",
-      location: "",
-      description: "",
+  const [formData, setFormData] = useState<AddTimeslotFormData>({
+    date: "",
+    startTime: "09:00",
+    endTime: "10:00",
+    location: "",
+    description: "",
+  });
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData(initialData);
     }
-  );
+  }, [initialData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
