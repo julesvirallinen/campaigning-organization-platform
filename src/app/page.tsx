@@ -63,11 +63,18 @@ export default function HomePage() {
   };
 
   const handleRemoveSignUp = async (slotId: string) => {
-    await fetch(`/api/signups/${slotId}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name }),
-    });
+    const slot = timeslots.find((s) => s.id === slotId);
+    if (!slot || slot.signups.length !== 1) {
+      await fetch(`/api/signups/${slotId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+    } else {
+      await fetch(`/api/timeslots/${slotId}`, {
+        method: "DELETE",
+      });
+    }
     fetchTimeslots();
   };
 
@@ -146,11 +153,13 @@ export default function HomePage() {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
+    <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Available Time Slots</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+          Available Time Slots
+        </h1>
         <div className="flex items-center gap-4">
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 dark:text-gray-300">
             Signed in as: <span className="font-medium">{name}</span>
           </div>
           <button
@@ -158,7 +167,7 @@ export default function HomePage() {
               localStorage.removeItem("myName");
               setName("");
             }}
-            className="text-sm text-red-600 hover:text-red-700"
+            className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
           >
             Logout
           </button>
@@ -176,7 +185,7 @@ export default function HomePage() {
                 onClick={() => {
                   router.push(`/admin?date=${date}`);
                 }}
-                className="text-gray-500 hover:text-gray-700"
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                 title="Add timeslot for this date"
               >
                 <svg
@@ -193,7 +202,7 @@ export default function HomePage() {
                 </svg>
               </button>
             </div>
-            <div className="space-y-2">
+            <div className="space-y-4">
               {groupedTimeslots[date]?.map((slot) => {
                 const isSignedUp = slot.signups.some((s) => s.name === name);
                 const isExpanded = expandedSlot === slot.id;
@@ -201,50 +210,51 @@ export default function HomePage() {
                 return (
                   <div
                     key={slot.id}
-                    className="bg-gray-50 rounded-lg shadow-sm overflow-hidden border border-gray-100"
+                    className="border rounded-lg p-4 flex flex-col bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600"
                   >
                     <div
-                      className="p-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className="cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors rounded-md"
                       onClick={() =>
                         setExpandedSlot(isExpanded ? null : slot.id)
                       }
                     >
                       <div className="flex justify-between items-center">
                         <div className="flex items-center space-x-4">
-                          <span className="font-medium text-gray-900">
+                          <span className="font-medium text-gray-900 dark:text-white">
                             {formatTime(slot.startTime)} -{" "}
                             {formatTime(slot.endTime)}
                           </span>
-                          <span className="text-gray-600">{slot.location}</span>
+                          <span className="text-gray-600 dark:text-gray-300">
+                            {slot.location}
+                          </span>
                         </div>
                         <div className="flex items-center space-x-2">
                           <div className="flex flex-wrap gap-1">
-                            {slot.signups.length === 0 ? (
-                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            {slot.signups.map((signup) => (
+                              <span
+                                key={signup.id}
+                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
+                              >
+                                {signup.name}
+                              </span>
+                            ))}
+                            {slot.signups.length <= 1 && (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
                                 HELP NEEDED
                               </span>
-                            ) : (
-                              slot.signups.map((signup) => (
-                                <span
-                                  key={signup.id}
-                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                                >
-                                  {signup.name}
-                                </span>
-                              ))
                             )}
                           </div>
                           {isExpanded ? (
-                            <ChevronUpIcon className="h-5 w-5 text-gray-500" />
+                            <ChevronUpIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                           ) : (
-                            <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+                            <ChevronDownIcon className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                           )}
                         </div>
                       </div>
                     </div>
 
                     {isExpanded && (
-                      <div className="border-t p-3 bg-white dark:bg-gray-800">
+                      <div className="mt-4 border-t pt-4 border-gray-200 dark:border-gray-600">
                         {slot.description && (
                           <div className="mb-4 text-gray-700 dark:text-gray-300">
                             {slot.description}
@@ -256,21 +266,33 @@ export default function HomePage() {
                               Current Signups:
                             </h3>
                             <div className="space-y-2">
-                              {slot.signups.map((signup) => (
-                                <div
-                                  key={signup.id}
-                                  className="flex items-start space-x-2 text-sm"
-                                >
-                                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                                    {signup.name}
-                                  </span>
-                                  {signup.note && (
+                              <div className="flex flex-wrap gap-1 mb-2">
+                                {slot.signups
+                                  .filter((signup) => !signup.note)
+                                  .map((signup) => (
+                                    <span
+                                      key={signup.id}
+                                      className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
+                                    >
+                                      {signup.name}
+                                    </span>
+                                  ))}
+                              </div>
+                              {slot.signups
+                                .filter((signup) => signup.note)
+                                .map((signup) => (
+                                  <div
+                                    key={signup.id}
+                                    className="flex items-start space-x-2 text-sm"
+                                  >
+                                    <span className="font-medium text-gray-900 dark:text-gray-100">
+                                      {signup.name}
+                                    </span>
                                     <span className="text-gray-600 dark:text-gray-400">
                                       - {signup.note}
                                     </span>
-                                  )}
-                                </div>
-                              ))}
+                                  </div>
+                                ))}
                             </div>
                           </div>
                         )}
@@ -287,13 +309,13 @@ export default function HomePage() {
                                 id={`note-${slot.id}`}
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
-                                className="w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 dark:bg-gray-700 dark:text-white"
+                                className="w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 dark:bg-gray-700 dark:text-white focus:ring-indigo-500 focus:border-indigo-500"
                                 rows={2}
                               />
                             </div>
                             <button
                               onClick={() => handleSignUp(slot.id)}
-                              className="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                              className="w-full bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                             >
                               Sign Up
                             </button>
@@ -301,7 +323,7 @@ export default function HomePage() {
                         ) : (
                           <button
                             onClick={() => handleRemoveSignUp(slot.id)}
-                            className="w-full bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
+                            className="w-full bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                           >
                             Remove Sign Up
                           </button>
@@ -319,7 +341,7 @@ export default function HomePage() {
       <div className="mt-8 text-center">
         <a
           href="/past-timeslots"
-          className="inline-block bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-medium"
+          className="inline-block bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
         >
           View Past Time Slots
         </a>
