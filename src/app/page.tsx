@@ -11,7 +11,6 @@ import {
   isSameDay,
 } from "date-fns";
 import { useRouter } from "next/navigation";
-import Title from "@/components/Title";
 
 interface TimeSlot {
   id: string;
@@ -20,6 +19,7 @@ interface TimeSlot {
   endTime: string;
   location: string;
   signups: Array<{ id: string; name: string; note?: string }>;
+  description?: string;
 }
 
 export default function HomePage() {
@@ -111,16 +111,15 @@ export default function HomePage() {
   if (!name) {
     return (
       <div className="container mx-auto p-4 max-w-2xl">
-        <Title />
         <h1 className="text-3xl font-bold mb-6 text-center">Welcome!</h1>
         <form
           onSubmit={handleNameSubmit}
-          className="space-y-4 bg-white p-6 rounded-lg shadow-md"
+          className="space-y-4 bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md"
         >
           <div>
             <label
               htmlFor="nameInput"
-              className="block text-lg font-medium mb-2"
+              className="block text-lg font-medium mb-2 text-gray-700 dark:text-gray-200"
             >
               Your Name
             </label>
@@ -129,7 +128,7 @@ export default function HomePage() {
               type="text"
               value={inputName}
               onChange={(e) => setInputName(e.target.value)}
-              className="w-full border border-gray-300 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full border border-gray-300 dark:border-gray-600 p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white dark:placeholder-gray-400"
               required
               autoComplete="off"
               placeholder="Enter your name"
@@ -147,160 +146,183 @@ export default function HomePage() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <Title />
-      <div className="container mx-auto p-4 max-w-4xl">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold">Available Time Slots</h1>
-          <div className="flex items-center gap-4">
-            <div className="text-sm text-gray-600">
-              Signed in as: <span className="font-medium">{name}</span>
-            </div>
-            <button
-              onClick={() => {
-                localStorage.removeItem("myName");
-                setName("");
-              }}
-              className="text-sm text-red-600 hover:text-red-700"
-            >
-              Logout
-            </button>
+    <div className="container mx-auto p-4 max-w-4xl">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">Available Time Slots</h1>
+        <div className="flex items-center gap-4">
+          <div className="text-sm text-gray-600">
+            Signed in as: <span className="font-medium">{name}</span>
           </div>
+          <button
+            onClick={() => {
+              localStorage.removeItem("myName");
+              setName("");
+            }}
+            className="text-sm text-red-600 hover:text-red-700"
+          >
+            Logout
+          </button>
         </div>
+      </div>
 
-        <div className="space-y-6">
-          {allDates.map((date) => (
-            <div key={date}>
-              <div className="flex justify-between items-center mb-3">
-                <h2 className="text-lg font-semibold text-gray-700">
-                  {formatDayHeader(date)}
-                </h2>
-                <button
-                  onClick={() => {
-                    router.push(`/admin?date=${date}`);
-                  }}
-                  className="text-gray-500 hover:text-gray-700"
-                  title="Add timeslot for this date"
+      <div className="space-y-6">
+        {allDates.map((date) => (
+          <div key={date}>
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold text-gray-700">
+                {formatDayHeader(date)}
+              </h2>
+              <button
+                onClick={() => {
+                  router.push(`/admin?date=${date}`);
+                }}
+                className="text-gray-500 hover:text-gray-700"
+                title="Add timeslot for this date"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
                 >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-5 w-5"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </button>
-              </div>
-              <div className="space-y-2">
-                {groupedTimeslots[date]?.map((slot) => {
-                  const isSignedUp = slot.signups.some((s) => s.name === name);
-                  const isExpanded = expandedSlot === slot.id;
+                  <path
+                    fillRule="evenodd"
+                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-2">
+              {groupedTimeslots[date]?.map((slot) => {
+                const isSignedUp = slot.signups.some((s) => s.name === name);
+                const isExpanded = expandedSlot === slot.id;
 
-                  return (
+                return (
+                  <div
+                    key={slot.id}
+                    className="bg-gray-50 rounded-lg shadow-sm overflow-hidden border border-gray-100"
+                  >
                     <div
-                      key={slot.id}
-                      className="bg-gray-50 rounded-lg shadow-sm overflow-hidden border border-gray-100"
+                      className="p-3 cursor-pointer hover:bg-gray-100 transition-colors"
+                      onClick={() =>
+                        setExpandedSlot(isExpanded ? null : slot.id)
+                      }
                     >
-                      <div
-                        className="p-3 cursor-pointer hover:bg-gray-100 transition-colors"
-                        onClick={() =>
-                          setExpandedSlot(isExpanded ? null : slot.id)
-                        }
-                      >
-                        <div className="flex justify-between items-center">
-                          <div className="flex items-center space-x-4">
-                            <span className="font-medium text-gray-900">
-                              {formatTime(slot.startTime)} -{" "}
-                              {formatTime(slot.endTime)}
-                            </span>
-                            <span className="text-gray-600">
-                              {slot.location}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <div className="flex flex-wrap gap-1">
-                              {slot.signups.length === 0 ? (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                  HELP NEEDED
-                                </span>
-                              ) : (
-                                slot.signups.map((signup) => (
-                                  <span
-                                    key={signup.id}
-                                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                                  >
-                                    {signup.name}
-                                  </span>
-                                ))
-                              )}
-                            </div>
-                            {isExpanded ? (
-                              <ChevronUpIcon className="h-5 w-5 text-gray-500" />
+                      <div className="flex justify-between items-center">
+                        <div className="flex items-center space-x-4">
+                          <span className="font-medium text-gray-900">
+                            {formatTime(slot.startTime)} -{" "}
+                            {formatTime(slot.endTime)}
+                          </span>
+                          <span className="text-gray-600">{slot.location}</span>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <div className="flex flex-wrap gap-1">
+                            {slot.signups.length === 0 ? (
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                HELP NEEDED
+                              </span>
                             ) : (
-                              <ChevronDownIcon className="h-5 w-5 text-gray-500" />
+                              slot.signups.map((signup) => (
+                                <span
+                                  key={signup.id}
+                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+                                >
+                                  {signup.name}
+                                </span>
+                              ))
                             )}
                           </div>
-                        </div>
-                      </div>
-
-                      {isExpanded && (
-                        <div className="border-t p-3 bg-white">
-                          {!isSignedUp ? (
-                            <div className="space-y-3">
-                              <div>
-                                <label
-                                  htmlFor={`note-${slot.id}`}
-                                  className="block text-sm font-medium text-gray-700 mb-1"
-                                >
-                                  Optional Note
-                                </label>
-                                <textarea
-                                  id={`note-${slot.id}`}
-                                  value={note}
-                                  onChange={(e) => setNote(e.target.value)}
-                                  className="w-full border border-gray-300 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                  rows={2}
-                                  placeholder="Add any additional information..."
-                                />
-                              </div>
-                              <button
-                                onClick={() => handleSignUp(slot.id)}
-                                className="w-full bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition-colors font-medium"
-                              >
-                                Sign Up
-                              </button>
-                            </div>
+                          {isExpanded ? (
+                            <ChevronUpIcon className="h-5 w-5 text-gray-500" />
                           ) : (
-                            <button
-                              onClick={() => handleRemoveSignUp(slot.id)}
-                              className="w-full bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-colors font-medium"
-                            >
-                              Remove Sign Up
-                            </button>
+                            <ChevronDownIcon className="h-5 w-5 text-gray-500" />
                           )}
                         </div>
-                      )}
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
-        </div>
 
-        <div className="mt-8 text-center">
-          <a
-            href="/past-timeslots"
-            className="inline-block bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-medium"
-          >
-            View Past Time Slots
-          </a>
-        </div>
+                    {isExpanded && (
+                      <div className="border-t p-3 bg-white dark:bg-gray-800">
+                        {slot.description && (
+                          <div className="mb-4 text-gray-700 dark:text-gray-300">
+                            {slot.description}
+                          </div>
+                        )}
+                        {slot.signups.length > 0 && (
+                          <div className="mb-4">
+                            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                              Current Signups:
+                            </h3>
+                            <div className="space-y-2">
+                              {slot.signups.map((signup) => (
+                                <div
+                                  key={signup.id}
+                                  className="flex items-start space-x-2 text-sm"
+                                >
+                                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                                    {signup.name}
+                                  </span>
+                                  {signup.note && (
+                                    <span className="text-gray-600 dark:text-gray-400">
+                                      - {signup.note}
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {!isSignedUp ? (
+                          <div className="space-y-3">
+                            <div>
+                              <label
+                                htmlFor={`note-${slot.id}`}
+                                className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
+                              >
+                                Add a note (optional)
+                              </label>
+                              <textarea
+                                id={`note-${slot.id}`}
+                                value={note}
+                                onChange={(e) => setNote(e.target.value)}
+                                className="w-full border border-gray-300 dark:border-gray-600 rounded-md shadow-sm p-2 dark:bg-gray-700 dark:text-white"
+                                rows={2}
+                              />
+                            </div>
+                            <button
+                              onClick={() => handleSignUp(slot.id)}
+                              className="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors"
+                            >
+                              Sign Up
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleRemoveSignUp(slot.id)}
+                            className="w-full bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors"
+                          >
+                            Remove Sign Up
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-8 text-center">
+        <a
+          href="/past-timeslots"
+          className="inline-block bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-medium"
+        >
+          View Past Time Slots
+        </a>
       </div>
     </div>
   );

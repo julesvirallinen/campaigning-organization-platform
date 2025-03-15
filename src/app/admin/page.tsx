@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { fi } from "date-fns/locale";
 import { Slider, Box } from "@mui/material";
-import Title from "@/components/Title";
-import { useRouter } from "next/navigation";
 
 interface TimeSlot {
   id: string;
@@ -18,17 +16,14 @@ interface TimeSlot {
 }
 
 export default function AdminPage() {
-  const router = useRouter();
   const [timeslots, setTimeslots] = useState<TimeSlot[]>([]);
   const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null);
   const [formData, setFormData] = useState({
     date: "",
-    startTime: "",
-    endTime: "",
+    startTime: "09:00",
+    endTime: "10:00",
     location: "",
     description: "",
-    creatorName: "",
-    creatorNote: "",
   });
 
   useEffect(() => {
@@ -38,11 +33,6 @@ export default function AdminPage() {
     const dateParam = params.get("date");
     if (dateParam) {
       setFormData((prev) => ({ ...prev, date: dateParam }));
-    }
-    // Get name from localStorage
-    const storedName = localStorage.getItem("myName");
-    if (storedName) {
-      setFormData((prev) => ({ ...prev, creatorName: storedName }));
     }
   }, []);
 
@@ -79,15 +69,12 @@ export default function AdminPage() {
       fetchTimeslots();
       setFormData({
         date: "",
-        startTime: "",
-        endTime: "",
+        startTime: "09:00",
+        endTime: "10:00",
         location: "",
         description: "",
-        creatorName: "",
-        creatorNote: "",
       });
       setEditingSlot(null);
-      router.push("/");
     } catch (error) {
       console.error("Error submitting timeslot:", error);
     }
@@ -121,8 +108,6 @@ export default function AdminPage() {
       endTime,
       location: slot.location,
       description: slot.description,
-      creatorName: slot.signups[0]?.name || "",
-      creatorNote: slot.signups[0]?.note || "",
     });
   };
 
@@ -130,18 +115,19 @@ export default function AdminPage() {
     setEditingSlot(null);
     setFormData({
       date: "",
-      startTime: "",
-      endTime: "",
+      startTime: "09:00",
+      endTime: "10:00",
       location: "",
       description: "",
-      creatorName: "",
-      creatorNote: "",
     });
   };
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Title />
+      <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">
+        Admin Panel
+      </h1>
+
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
         <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
           {editingSlot ? "Edit Timeslot" : "Add New Timeslot"}
@@ -150,7 +136,7 @@ export default function AdminPage() {
           <div>
             <label
               htmlFor="date"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-200"
             >
               Date
             </label>
@@ -161,7 +147,7 @@ export default function AdminPage() {
               onChange={(e) =>
                 setFormData({ ...formData, date: e.target.value })
               }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
               required
               min={new Date().toISOString().split("T")[0]}
             />
@@ -171,7 +157,7 @@ export default function AdminPage() {
             <div>
               <label
                 htmlFor="startTime"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-200"
               >
                 Start Time
               </label>
@@ -200,7 +186,7 @@ export default function AdminPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, startTime: e.target.value })
                 }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                 required
                 min="00:00"
                 max="23:59"
@@ -209,7 +195,7 @@ export default function AdminPage() {
             <div>
               <label
                 htmlFor="endTime"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="block text-sm font-medium text-gray-700 dark:text-gray-200"
               >
                 End Time
               </label>
@@ -238,7 +224,7 @@ export default function AdminPage() {
                 onChange={(e) =>
                   setFormData({ ...formData, endTime: e.target.value })
                 }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                 required
                 min="00:00"
                 max="23:59"
@@ -249,7 +235,7 @@ export default function AdminPage() {
           <div>
             <label
               htmlFor="location"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-200"
             >
               Location
             </label>
@@ -260,7 +246,7 @@ export default function AdminPage() {
               onChange={(e) =>
                 setFormData({ ...formData, location: e.target.value })
               }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
               required
             />
           </div>
@@ -268,7 +254,7 @@ export default function AdminPage() {
           <div>
             <label
               htmlFor="description"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-200"
             >
               Description
             </label>
@@ -278,39 +264,9 @@ export default function AdminPage() {
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
               rows={3}
             />
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Your Name
-              </label>
-              <input
-                type="text"
-                value={formData.creatorName}
-                onChange={(e) =>
-                  setFormData({ ...formData, creatorName: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                Your Note (Optional)
-              </label>
-              <textarea
-                value={formData.creatorNote}
-                onChange={(e) =>
-                  setFormData({ ...formData, creatorNote: e.target.value })
-                }
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                rows={2}
-              />
-            </div>
           </div>
 
           <div className="flex gap-4">
