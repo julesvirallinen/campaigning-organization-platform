@@ -166,9 +166,17 @@ export default function AdminPage() {
                   value={parseInt(formData.startTime.split(":")[0])}
                   onChange={(_, value) => {
                     const hours = value as number;
+                    const newStartTime = `${hours
+                      .toString()
+                      .padStart(2, "0")}:00`;
                     setFormData({
                       ...formData,
-                      startTime: `${hours.toString().padStart(2, "0")}:00`,
+                      startTime: newStartTime,
+                      // If end time is earlier than new start time, update it
+                      endTime:
+                        formData.endTime <= newStartTime
+                          ? `${(hours + 1).toString().padStart(2, "0")}:00`
+                          : formData.endTime,
                     });
                   }}
                   min={0}
@@ -183,13 +191,24 @@ export default function AdminPage() {
                 id="startTime"
                 type="time"
                 value={formData.startTime}
-                onChange={(e) =>
-                  setFormData({ ...formData, startTime: e.target.value })
-                }
+                onChange={(e) => {
+                  const newStartTime = e.target.value;
+                  setFormData({
+                    ...formData,
+                    startTime: newStartTime,
+                    // If end time is earlier than new start time, update it
+                    endTime:
+                      formData.endTime <= newStartTime
+                        ? `${(parseInt(newStartTime.split(":")[0]) + 1)
+                            .toString()
+                            .padStart(2, "0")}:00`
+                        : formData.endTime,
+                  });
+                }}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                 required
                 min="00:00"
-                max="23:59"
+                max={formData.endTime}
               />
             </div>
             <div>
@@ -204,12 +223,20 @@ export default function AdminPage() {
                   value={parseInt(formData.endTime.split(":")[0])}
                   onChange={(_, value) => {
                     const hours = value as number;
+                    const newEndTime = `${hours
+                      .toString()
+                      .padStart(2, "0")}:00`;
                     setFormData({
                       ...formData,
-                      endTime: `${hours.toString().padStart(2, "0")}:00`,
+                      endTime: newEndTime,
+                      // If start time is later than new end time, update it
+                      startTime:
+                        formData.startTime >= newEndTime
+                          ? `${(hours - 1).toString().padStart(2, "0")}:00`
+                          : formData.startTime,
                     });
                   }}
-                  min={0}
+                  min={parseInt(formData.startTime.split(":")[0]) + 1}
                   max={23}
                   marks
                   valueLabelDisplay="auto"
@@ -221,12 +248,23 @@ export default function AdminPage() {
                 id="endTime"
                 type="time"
                 value={formData.endTime}
-                onChange={(e) =>
-                  setFormData({ ...formData, endTime: e.target.value })
-                }
+                onChange={(e) => {
+                  const newEndTime = e.target.value;
+                  setFormData({
+                    ...formData,
+                    endTime: newEndTime,
+                    // If start time is later than new end time, update it
+                    startTime:
+                      formData.startTime >= newEndTime
+                        ? `${(parseInt(newEndTime.split(":")[0]) - 1)
+                            .toString()
+                            .padStart(2, "0")}:00`
+                        : formData.startTime,
+                  });
+                }}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
                 required
-                min="00:00"
+                min={formData.startTime}
                 max="23:59"
               />
             </div>
