@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { fi } from "date-fns/locale";
-import { Slider, Box } from "@mui/material";
+import AddTimeslotForm from "../components/AddTimeslotForm";
+import Header from "../components/Header";
 
 interface TimeSlot {
   id: string;
@@ -43,40 +44,6 @@ export default function AdminPage() {
       setTimeslots(data);
     } catch (error) {
       console.error("Error fetching timeslots:", error);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      if (editingSlot) {
-        await fetch(`/api/timeslots/${editingSlot.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        });
-      } else {
-        await fetch("/api/timeslots", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(formData),
-        });
-      }
-      fetchTimeslots();
-      setFormData({
-        date: "",
-        startTime: "09:00",
-        endTime: "10:00",
-        location: "",
-        description: "",
-      });
-      setEditingSlot(null);
-    } catch (error) {
-      console.error("Error submitting timeslot:", error);
     }
   };
 
@@ -124,207 +91,49 @@ export default function AdminPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 text-gray-900 dark:text-white">
-        Admin Panel
-      </h1>
+      <Header title="Admin Panel" />
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-8">
         <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-white">
           {editingSlot ? "Edit Timeslot" : "Add New Timeslot"}
         </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="date"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-200"
-            >
-              Date
-            </label>
-            <input
-              id="date"
-              type="date"
-              value={formData.date}
-              onChange={(e) =>
-                setFormData({ ...formData, date: e.target.value })
+        <AddTimeslotForm
+          onSubmit={async (formData) => {
+            try {
+              if (editingSlot) {
+                await fetch(`/api/timeslots/${editingSlot.id}`, {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(formData),
+                });
+              } else {
+                await fetch("/api/timeslots", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify(formData),
+                });
               }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-              required
-              min={new Date().toISOString().split("T")[0]}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label
-                htmlFor="startTime"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-200"
-              >
-                Start Time
-              </label>
-              <Box sx={{ width: "100%", mb: 2 }}>
-                <Slider
-                  value={parseInt(formData.startTime.split(":")[0])}
-                  onChange={(_, value) => {
-                    const hours = value as number;
-                    const newStartTime = `${hours
-                      .toString()
-                      .padStart(2, "0")}:00`;
-                    setFormData({
-                      ...formData,
-                      startTime: newStartTime,
-                      // If end time is earlier than new start time, update it
-                      endTime:
-                        formData.endTime <= newStartTime
-                          ? `${(hours + 1).toString().padStart(2, "0")}:00`
-                          : formData.endTime,
-                    });
-                  }}
-                  min={0}
-                  max={23}
-                  marks
-                  valueLabelDisplay="auto"
-                  valueLabelFormat={(value) => `${value}:00`}
-                  className="dark:text-white"
-                />
-              </Box>
-              <input
-                id="startTime"
-                type="time"
-                value={formData.startTime}
-                onChange={(e) => {
-                  const newStartTime = e.target.value;
-                  setFormData({
-                    ...formData,
-                    startTime: newStartTime,
-                    // If end time is earlier than new start time, update it
-                    endTime:
-                      formData.endTime <= newStartTime
-                        ? `${(parseInt(newStartTime.split(":")[0]) + 1)
-                            .toString()
-                            .padStart(2, "0")}:00`
-                        : formData.endTime,
-                  });
-                }}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                required
-                min="00:00"
-                max={formData.endTime}
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="endTime"
-                className="block text-sm font-medium text-gray-700 dark:text-gray-200"
-              >
-                End Time
-              </label>
-              <Box sx={{ width: "100%", mb: 2 }}>
-                <Slider
-                  value={parseInt(formData.endTime.split(":")[0])}
-                  onChange={(_, value) => {
-                    const hours = value as number;
-                    const newEndTime = `${hours
-                      .toString()
-                      .padStart(2, "0")}:00`;
-                    setFormData({
-                      ...formData,
-                      endTime: newEndTime,
-                      // If start time is later than new end time, update it
-                      startTime:
-                        formData.startTime >= newEndTime
-                          ? `${(hours - 1).toString().padStart(2, "0")}:00`
-                          : formData.startTime,
-                    });
-                  }}
-                  min={parseInt(formData.startTime.split(":")[0]) + 1}
-                  max={23}
-                  marks
-                  valueLabelDisplay="auto"
-                  valueLabelFormat={(value) => `${value}:00`}
-                  className="dark:text-white"
-                />
-              </Box>
-              <input
-                id="endTime"
-                type="time"
-                value={formData.endTime}
-                onChange={(e) => {
-                  const newEndTime = e.target.value;
-                  setFormData({
-                    ...formData,
-                    endTime: newEndTime,
-                    // If start time is later than new end time, update it
-                    startTime:
-                      formData.startTime >= newEndTime
-                        ? `${(parseInt(newEndTime.split(":")[0]) - 1)
-                            .toString()
-                            .padStart(2, "0")}:00`
-                        : formData.startTime,
-                  });
-                }}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-                required
-                min={formData.startTime}
-                max="23:59"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label
-              htmlFor="location"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-200"
-            >
-              Location
-            </label>
-            <input
-              id="location"
-              type="text"
-              value={formData.location}
-              onChange={(e) =>
-                setFormData({ ...formData, location: e.target.value })
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-              required
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="description"
-              className="block text-sm font-medium text-gray-700 dark:text-gray-200"
-            >
-              Description
-            </label>
-            <textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400"
-              rows={3}
-            />
-          </div>
-
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            >
-              {editingSlot ? "Update Timeslot" : "Add Timeslot"}
-            </button>
-            {editingSlot && (
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              >
-                Cancel
-              </button>
-            )}
-          </div>
-        </form>
+              fetchTimeslots();
+              setFormData({
+                date: "",
+                startTime: "09:00",
+                endTime: "10:00",
+                location: "",
+                description: "",
+              });
+              setEditingSlot(null);
+            } catch (error) {
+              console.error("Error submitting timeslot:", error);
+            }
+          }}
+          onCancel={handleCancelEdit}
+          initialData={formData}
+          submitLabel={editingSlot ? "Update Timeslot" : "Add Timeslot"}
+        />
       </div>
 
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">

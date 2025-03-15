@@ -10,7 +10,8 @@ import {
   formatISO,
   isSameDay,
 } from "date-fns";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
+import Header from "./components/Header";
 
 interface TimeSlot {
   id: string;
@@ -23,7 +24,6 @@ interface TimeSlot {
 }
 
 export default function HomePage() {
-  const router = useRouter();
   const [timeslots, setTimeslots] = useState<TimeSlot[]>([]);
   const [name, setName] = useState("");
   const [inputName, setInputName] = useState("");
@@ -154,25 +154,7 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-          Available Time Slots
-        </h1>
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-gray-600 dark:text-gray-300">
-            Signed in as: <span className="font-medium">{name}</span>
-          </div>
-          <button
-            onClick={() => {
-              localStorage.removeItem("myName");
-              setName("");
-            }}
-            className="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-          >
-            Logout
-          </button>
-        </div>
-      </div>
+      <Header title="Available Time Slots" />
 
       <div className="space-y-6">
         {allDates.map((date) => (
@@ -181,10 +163,8 @@ export default function HomePage() {
               <h2 className="text-lg font-semibold text-gray-700">
                 {formatDayHeader(date)}
               </h2>
-              <button
-                onClick={() => {
-                  router.push(`/admin?date=${date}`);
-                }}
+              <Link
+                href={`/add?date=${date}`}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                 title="Add timeslot for this date"
               >
@@ -200,7 +180,7 @@ export default function HomePage() {
                     clipRule="evenodd"
                   />
                 </svg>
-              </button>
+              </Link>
             </div>
             <div className="space-y-4">
               {groupedTimeslots[date]?.map((slot) => {
@@ -338,10 +318,16 @@ export default function HomePage() {
         ))}
       </div>
 
-      <div className="mt-8 text-center">
+      <div className="mt-8 flex justify-center gap-4">
+        <Link
+          href="/add"
+          className="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+        >
+          Add New Slot
+        </Link>
         <a
           href="/past-timeslots"
-          className="inline-block bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+          className="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-colors font-medium focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
         >
           View Past Time Slots
         </a>
