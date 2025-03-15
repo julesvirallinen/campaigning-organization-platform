@@ -18,7 +18,7 @@ export default function Header({ title }: HeaderProps) {
 
   return (
     <div className="mb-8">
-      <div className="flex justify-between items-center mb-4 bg-indigo-600 -mx-4 px-4 py-3">
+      <div className="flex justify-between items-center mb-4 bg-indigo-600 -mx-3 px-5 py-2">
         <Link href="/" className="flex items-center gap-2">
           <Image
             src="/titta-black-line_3.png"
@@ -32,7 +32,7 @@ export default function Header({ title }: HeaderProps) {
         {name && (
           <div className="flex items-center gap-4">
             <div className="text-sm text-white">
-              Signed in as: <span className="font-medium">{name}</span>
+              <span className="font-medium">{name}</span>
             </div>
             <button
               onClick={() => {

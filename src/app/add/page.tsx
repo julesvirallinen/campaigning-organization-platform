@@ -21,6 +21,7 @@ export default function AddPage() {
     location: "",
     description: "",
   });
+  const [name, setName] = useState("");
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -28,17 +29,34 @@ export default function AddPage() {
     if (dateParam) {
       setInitialData((prev) => ({ ...prev, date: dateParam }));
     }
+    const storedName = localStorage.getItem("myName");
+    if (storedName) setName(storedName);
   }, []);
 
   const handleAddTimeslot = async (data: AddTimeslotFormData) => {
     try {
-      await fetch("/api/timeslots", {
+      const response = await fetch("/api/timeslots", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
+      const timeslot = await response.json();
+
+      // Add creator as first signup
+      if (name) {
+        await fetch("/api/signups", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name,
+            timeSlotId: timeslot.id,
+            note: "Creator",
+          }),
+        });
+      }
+
       // Redirect back to main page after successful add
       window.location.href = "/";
     } catch (error) {

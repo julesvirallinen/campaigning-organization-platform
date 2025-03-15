@@ -198,7 +198,7 @@ export default function HomePage() {
                         setExpandedSlot(isExpanded ? null : slot.id)
                       }
                     >
-                      <div className="flex justify-between items-center">
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
                         <div className="flex items-center space-x-4">
                           <span className="font-medium text-gray-900 dark:text-white">
                             {formatTime(slot.startTime)} -{" "}
@@ -208,8 +208,8 @@ export default function HomePage() {
                             {slot.location}
                           </span>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <div className="flex flex-wrap gap-1">
+                        <div className="flex items-center space-x-2 w-full sm:w-auto">
+                          <div className="flex flex-wrap gap-1 w-full sm:w-auto">
                             {slot.signups.map((signup) => (
                               <span
                                 key={signup.id}
