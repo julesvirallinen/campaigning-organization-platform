@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { format, parseISO } from "date-fns";
-import { fi } from "date-fns/locale";
 import AddTimeslotForm from "../components/AddTimeslotForm";
 import Header from "../components/Header";
-import { formatTime, formatDate } from "@/lib/date-utils";
+import { formatTime, formatDate, formatDayHeader } from "@/lib/date-utils";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/16/solid";
 
 interface TimeSlot {
   id: string;
@@ -14,12 +13,13 @@ interface TimeSlot {
   endTime: string;
   location: string;
   description: string;
-  signups: { name: string; note: string }[];
+  signups: { id?: string; name: string; note?: string }[];
 }
 
 export default function AdminPage() {
   const [timeslots, setTimeslots] = useState<TimeSlot[]>([]);
   const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null);
+  const [expandedSlot, setExpandedSlot] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     date: "",
     startTime: "09:00",
@@ -98,6 +98,10 @@ export default function AdminPage() {
     });
   };
 
+  const toggleExpand = (id: string) => {
+    setExpandedSlot(expandedSlot === id ? null : id);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Header title="Admin Panel" />
@@ -153,36 +157,87 @@ export default function AdminPage() {
           {timeslots.map((slot) => (
             <div
               key={slot.id}
-              className="border rounded-lg p-4 flex justify-between items-start"
+              className="border rounded-lg p-4 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600"
             >
-              <div>
-                <div className="font-medium">
-                  {format(parseISO(slot.date), "EEEE, d MMMM yyyy", {
-                    locale: fi,
-                  })}
+              <div className="flex justify-between items-start">
+                <div>
+                  <div className="font-medium text-gray-900 dark:text-white">
+                    {formatDayHeader(slot.date)}
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-300">
+                    {formatTime(slot.startTime)} - {formatTime(slot.endTime)}
+                  </div>
+                  <div className="text-gray-600 dark:text-gray-300">
+                    {slot.location}
+                  </div>
+                  {slot.description && (
+                    <div className="text-gray-600 dark:text-gray-300">
+                      {slot.description}
+                    </div>
+                  )}
+
+                  <div
+                    className="flex items-center mt-2 cursor-pointer text-blue-600 dark:text-blue-400"
+                    onClick={() => toggleExpand(slot.id)}
+                  >
+                    <span className="text-sm mr-1">
+                      {slot.signups.length} signup(s)
+                    </span>
+                    {expandedSlot === slot.id ? (
+                      <ChevronUpIcon className="h-4 w-4" />
+                    ) : (
+                      <ChevronDownIcon className="h-4 w-4" />
+                    )}
+                  </div>
+
+                  {expandedSlot === slot.id && slot.signups.length > 0 && (
+                    <div className="mt-2 pl-2 border-l-2 border-gray-200 dark:border-gray-600">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {slot.signups
+                            .filter((signup) => !signup.note)
+                            .map((signup, idx) => (
+                              <span
+                                key={signup.id || idx}
+                                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200"
+                              >
+                                {signup.name}
+                              </span>
+                            ))}
+                        </div>
+                        {slot.signups
+                          .filter((signup) => signup.note)
+                          .map((signup, idx) => (
+                            <div
+                              key={signup.id || idx}
+                              className="flex items-start space-x-2 text-sm"
+                            >
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                {signup.name}
+                              </span>
+                              <span className="text-gray-600 dark:text-gray-400">
+                                - {signup.note}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="text-gray-600">
-                  {slot.startTime} - {slot.endTime}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(slot)}
+                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(slot.id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                  >
+                    Delete
+                  </button>
                 </div>
-                <div className="text-gray-600">{slot.location}</div>
-                <div className="text-gray-600">{slot.description}</div>
-                <div className="text-sm text-gray-500 mt-2">
-                  {slot.signups.length} signup(s)
-                </div>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(slot)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDelete(slot.id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                >
-                  Delete
-                </button>
               </div>
             </div>
           ))}
