@@ -3,10 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "cp prisma/sqlite.prisma prisma/schema.prisma && prisma generate && next dev --turbopack",
-    "build": "cp prisma/postgres.prisma prisma/schema.prisma && prisma generate && next build",
+    "dev": "cp prisma/sqlite.prisma prisma/schema.prisma && prisma generate && TZ=Europe/Helsinki next dev --turbopack",
+    "build": "cp prisma/postgres.prisma prisma/schema.prisma && prisma generate && TZ=Europe/Helsinki next build",
     "postinstall": "prisma generate",
-    "start": "next start",
+    "start": "TZ=Europe/Helsinki next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
     "test": "jest",
