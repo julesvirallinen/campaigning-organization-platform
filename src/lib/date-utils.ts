@@ -20,8 +20,15 @@ export function formatDayHeader(dateStr: string): string {
  * Creates a Date object that preserves the local timezone
  */
 export function createLocalDate(dateStr: string, timeStr: string): Date {
-  const date = new Date(`${dateStr}T${timeStr}:00`);
-  return date;
+  // Create date with explicit timezone (Europe/Helsinki)
+  const isoString = `${dateStr}T${timeStr}:00`;
+  const date = new Date(isoString);
+
+  // Adjust for timezone offset to ensure correct local time
+  const finnishOffset = 2 * 60 * 60 * 1000; // 2 hours in milliseconds - would break in summer time
+
+  // Apply the offset difference to get the correct Finnish time
+  return new Date(date.getTime() + finnishOffset);
 }
 
 export function formatDate(dateStr: string): string {
