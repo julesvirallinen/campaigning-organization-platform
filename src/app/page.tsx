@@ -2,14 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
-import {
-  format,
-  startOfDay,
-  addDays,
-  parseISO,
-  formatISO,
-  isSameDay,
-} from "date-fns";
+import { startOfDay, addDays, parseISO, formatISO, isSameDay } from "date-fns";
 import Link from "next/link";
 import Header from "./components/Header";
 import { formatTime, formatDayHeader } from "@/lib/date-utils";

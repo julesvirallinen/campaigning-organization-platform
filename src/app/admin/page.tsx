@@ -5,6 +5,7 @@ import { format, parseISO } from "date-fns";
 import { fi } from "date-fns/locale";
 import AddTimeslotForm from "../components/AddTimeslotForm";
 import Header from "../components/Header";
+import { formatTime, formatDate } from "@/lib/date-utils";
 
 interface TimeSlot {
   id: string;
@@ -61,13 +62,21 @@ export default function AdminPage() {
 
   const handleEdit = (slot: TimeSlot) => {
     setEditingSlot(slot);
-    const startTime = slot.startTime.includes("T")
-      ? format(parseISO(slot.startTime), "HH:mm")
-      : slot.startTime;
-    const endTime = slot.endTime.includes("T")
-      ? format(parseISO(slot.endTime), "HH:mm")
-      : slot.endTime;
-    const date = format(parseISO(slot.date), "yyyy-MM-dd");
+    let startTime, endTime;
+
+    if (slot.startTime.includes("T")) {
+      startTime = formatTime(slot.startTime);
+    } else {
+      startTime = slot.startTime;
+    }
+
+    if (slot.endTime.includes("T")) {
+      endTime = formatTime(slot.endTime);
+    } else {
+      endTime = slot.endTime;
+    }
+
+    const date = formatDate(slot.date);
 
     setFormData({
       date,

@@ -5,7 +5,7 @@ import { format, parseISO } from "date-fns";
  * Preserves timezone information
  */
 export function formatTime(dateStr: string): string {
-  return format(parseISO(dateStr), "h:mm a");
+  return format(parseISO(dateStr), "HH:mm");
 }
 
 /**
@@ -13,7 +13,7 @@ export function formatTime(dateStr: string): string {
  * Preserves timezone information
  */
 export function formatDayHeader(dateStr: string): string {
-  return format(parseISO(dateStr), "EEEE, MMM d");
+  return format(parseISO(dateStr), "EEEE, d/M");
 }
 
 /**
@@ -22,6 +22,10 @@ export function formatDayHeader(dateStr: string): string {
 export function createLocalDate(dateStr: string, timeStr: string): Date {
   const date = new Date(`${dateStr}T${timeStr}:00`);
   return date;
+}
+
+export function formatDate(dateStr: string): string {
+  return format(parseISO(dateStr), "yyyy-MM-dd");
 }
 
 /**
