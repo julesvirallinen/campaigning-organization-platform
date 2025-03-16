@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createLocalDate } from "@/lib/date-utils";
+import { createLocalDate, toFinnishTime } from "@/lib/date-utils";
 
 export async function PUT(
   request: Request,
@@ -10,20 +10,24 @@ export async function PUT(
     const body = await request.json();
     const { date, startTime, endTime, location, description } = body;
 
-    // Create date objects with timezone information preserved
-    const dateObj = new Date(date);
+    // Create date objects with Finnish timezone properly converted to UTC for storage
+    const dateObj = createLocalDate(date, "00:00");
 
     // Handle different formats of time inputs
     let startTimeObj, endTimeObj;
 
     if (startTime.includes("T")) {
-      startTimeObj = new Date(startTime);
+      // If it's already an ISO string, convert it to a Date and ensure it's in UTC
+      const timeStr = new Date(startTime).toTimeString().slice(0, 5);
+      startTimeObj = createLocalDate(date, timeStr);
     } else {
       startTimeObj = createLocalDate(date, startTime);
     }
 
     if (endTime.includes("T")) {
-      endTimeObj = new Date(endTime);
+      // If it's already an ISO string, convert it to a Date and ensure it's in UTC
+      const timeStr = new Date(endTime).toTimeString().slice(0, 5);
+      endTimeObj = createLocalDate(date, timeStr);
     } else {
       endTimeObj = createLocalDate(date, endTime);
     }
@@ -41,7 +45,17 @@ export async function PUT(
       },
     });
 
-    return NextResponse.json(updatedTimeslot);
+    // Convert the updated timeslot back to Finnish timezone for the response
+    const finnishTimeslot = {
+      ...updatedTimeslot,
+      date: toFinnishTime(new Date(updatedTimeslot.date)).toISOString(),
+      startTime: toFinnishTime(
+        new Date(updatedTimeslot.startTime)
+      ).toISOString(),
+      endTime: toFinnishTime(new Date(updatedTimeslot.endTime)).toISOString(),
+    };
+
+    return NextResponse.json(finnishTimeslot);
   } catch (error) {
     console.error("Error updating timeslot:", error);
     return NextResponse.json(
