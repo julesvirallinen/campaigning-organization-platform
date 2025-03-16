@@ -29,6 +29,7 @@ export default function AddTimeslotForm({
     location: "",
     description: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (initialData) {
@@ -38,14 +39,17 @@ export default function AddTimeslotForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
 
     // Validate time range
     if (formData.startTime >= formData.endTime) {
       alert("Start time must be before end time");
+      setIsLoading(false);
       return;
     }
 
     await onSubmit(formData);
+    setIsLoading(false);
   };
 
   return (
@@ -224,9 +228,10 @@ export default function AddTimeslotForm({
       <div className="flex gap-4">
         <button
           type="submit"
+          disabled={isLoading}
           className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
         >
-          {submitLabel}
+          {isLoading ? "Adding..." : submitLabel}
         </button>
         <button
           type="button"
