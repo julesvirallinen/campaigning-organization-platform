@@ -9,14 +9,19 @@ export async function PUT(
     const body = await request.json();
     const { date, startTime, endTime, location, description } = body;
 
+    // Create date objects with timezone information preserved
+    const dateObj = new Date(date);
+    const startTimeObj = new Date(startTime);
+    const endTimeObj = new Date(endTime);
+
     const updatedTimeslot = await prisma.timeSlot.update({
       where: {
         id: params.id,
       },
       data: {
-        date,
-        startTime,
-        endTime,
+        date: dateObj,
+        startTime: startTimeObj,
+        endTime: endTimeObj,
         location,
         description,
       },

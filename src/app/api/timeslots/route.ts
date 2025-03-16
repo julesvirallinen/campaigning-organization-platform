@@ -11,11 +11,17 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const data = await request.json();
+
+  // Create date objects with timezone information preserved
+  const dateObj = new Date(data.date);
+  const startTimeObj = new Date(`${data.date}T${data.startTime}:00`);
+  const endTimeObj = new Date(`${data.date}T${data.endTime}:00`);
+
   const timeslot = await prisma.timeSlot.create({
     data: {
-      date: new Date(data.date),
-      startTime: new Date(`${data.date}T${data.startTime}:00`),
-      endTime: new Date(`${data.date}T${data.endTime}:00`),
+      date: dateObj,
+      startTime: startTimeObj,
+      endTime: endTimeObj,
       location: data.location,
       description: data.description || "",
     },
