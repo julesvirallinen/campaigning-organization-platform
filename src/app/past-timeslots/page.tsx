@@ -11,6 +11,7 @@ import {
   isSameDay,
 } from "date-fns";
 import Link from "next/link";
+import { formatTime, formatDayHeader } from "@/lib/date-utils";
 
 interface TimeSlot {
   id: string;
@@ -36,14 +37,6 @@ export default function PastTimeslotsPage() {
     const res = await fetch("/api/timeslots");
     const data = await res.json();
     setTimeslots(data);
-  };
-
-  const formatTime = (dateStr: string) => {
-    return format(parseISO(dateStr), "h:mm a");
-  };
-
-  const formatDayHeader = (dateStr: string) => {
-    return format(parseISO(dateStr), "EEEE, MMM d");
   };
 
   const getPastTwoWeeks = () => {

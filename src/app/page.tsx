@@ -12,6 +12,7 @@ import {
 } from "date-fns";
 import Link from "next/link";
 import Header from "./components/Header";
+import { formatTime, formatDayHeader } from "@/lib/date-utils";
 
 interface TimeSlot {
   id: string;
@@ -76,14 +77,6 @@ export default function HomePage() {
       });
     }
     fetchTimeslots();
-  };
-
-  const formatTime = (dateStr: string) => {
-    return format(parseISO(dateStr), "h:mm a");
-  };
-
-  const formatDayHeader = (dateStr: string) => {
-    return format(parseISO(dateStr), "EEEE, MMM d");
   };
 
   const getNextTwoWeeks = () => {

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { createLocalDate } from "@/lib/date-utils";
 
 export async function PUT(
   request: Request,
@@ -11,8 +12,21 @@ export async function PUT(
 
     // Create date objects with timezone information preserved
     const dateObj = new Date(date);
-    const startTimeObj = new Date(startTime);
-    const endTimeObj = new Date(endTime);
+
+    // Handle different formats of time inputs
+    let startTimeObj, endTimeObj;
+
+    if (startTime.includes("T")) {
+      startTimeObj = new Date(startTime);
+    } else {
+      startTimeObj = createLocalDate(date, startTime);
+    }
+
+    if (endTime.includes("T")) {
+      endTimeObj = new Date(endTime);
+    } else {
+      endTimeObj = createLocalDate(date, endTime);
+    }
 
     const updatedTimeslot = await prisma.timeSlot.update({
       where: {
