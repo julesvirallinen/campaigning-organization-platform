@@ -65,7 +65,7 @@ export default function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <Header title="Available Time Slots" />
+      <Header title="Tuu flaikuttaa!" />
 
       <div className="space-y-6">
         {allDates.map((date) => (
