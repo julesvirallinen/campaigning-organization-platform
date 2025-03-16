@@ -45,17 +45,7 @@ export async function PUT(
       },
     });
 
-    // Convert the updated timeslot back to Finnish timezone for the response
-    const finnishTimeslot = {
-      ...updatedTimeslot,
-      date: toFinnishTime(new Date(updatedTimeslot.date)).toISOString(),
-      startTime: toFinnishTime(
-        new Date(updatedTimeslot.startTime)
-      ).toISOString(),
-      endTime: toFinnishTime(new Date(updatedTimeslot.endTime)).toISOString(),
-    };
-
-    return NextResponse.json(finnishTimeslot);
+    return NextResponse.json(updatedTimeslot);
   } catch (error) {
     console.error("Error updating timeslot:", error);
     return NextResponse.json(

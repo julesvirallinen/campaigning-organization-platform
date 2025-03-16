@@ -1,5 +1,5 @@
 import { format, parseISO } from "date-fns";
-import { fromZonedTime, toZonedTime } from "date-fns-tz";
+import { toZonedTime } from "date-fns-tz";
 
 const TIMEZONE = "Europe/Helsinki";
 
@@ -19,16 +19,14 @@ export function formatDayHeader(dateStr: string): string {
   return format(parseISO(dateStr), "EEEE, d/M");
 }
 
-/**
- * Creates a Date object in Finnish timezone
- * Properly handles timezone conversion for storage
- */
 export function createLocalDate(dateStr: string, timeStr: string): Date {
-  // Create a date string in ISO format
   const isoString = `${dateStr}T${timeStr}:00`;
 
-  // Convert the local Finnish time to UTC for storage
-  return fromZonedTime(isoString, TIMEZONE);
+  const date = new Date(isoString);
+
+  const finnishOffset = -120; // -120 minutes for UTC+2
+
+  return new Date(date.getTime() + finnishOffset * 60 * 1000);
 }
 
 export function formatDate(dateStr: string): string {
@@ -44,6 +42,7 @@ export function serializeDate(date: Date): string {
 
 /**
  * Converts a UTC date to Finnish time for display
+ * This is used when retrieving dates from the database
  */
 export function toFinnishTime(date: Date): Date {
   return toZonedTime(date, TIMEZONE);

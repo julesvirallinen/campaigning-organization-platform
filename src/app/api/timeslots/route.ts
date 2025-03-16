@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { createLocalDate, toFinnishTime } from "@/lib/date-utils";
+import { createLocalDate } from "@/lib/date-utils";
 
 export async function GET() {
   // Fetch timeslots from the database
@@ -9,21 +9,15 @@ export async function GET() {
     orderBy: { date: "asc" },
   });
 
-  // Convert UTC dates from database to Finnish timezone for the client
-  const finnishTimeslots = timeslots.map((slot) => ({
-    ...slot,
-    date: toFinnishTime(new Date(slot.date)).toISOString(),
-    startTime: toFinnishTime(new Date(slot.startTime)).toISOString(),
-    endTime: toFinnishTime(new Date(slot.endTime)).toISOString(),
-  }));
-
-  return NextResponse.json(finnishTimeslots);
+  // The dates are already in UTC in the database
+  // When they're serialized to JSON, they'll be in ISO format
+  // The client will interpret them based on the local timezone
+  return NextResponse.json(timeslots);
 }
 
 export async function POST(request: Request) {
   const data = await request.json();
 
-  // Create date objects with Finnish timezone properly converted to UTC for storage
   const dateObj = createLocalDate(data.date, "00:00");
   const startTimeObj = createLocalDate(data.date, data.startTime);
   const endTimeObj = createLocalDate(data.date, data.endTime);
@@ -38,13 +32,7 @@ export async function POST(request: Request) {
     },
   });
 
-  // Convert the created timeslot back to Finnish timezone for the response
-  const finnishTimeslot = {
-    ...timeslot,
-    date: toFinnishTime(new Date(timeslot.date)).toISOString(),
-    startTime: toFinnishTime(new Date(timeslot.startTime)).toISOString(),
-    endTime: toFinnishTime(new Date(timeslot.endTime)).toISOString(),
-  };
-
-  return NextResponse.json(finnishTimeslot);
+  // Return the created timeslot
+  // The dates will be serialized to ISO format
+  return NextResponse.json(timeslot);
 }
